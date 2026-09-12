@@ -4,7 +4,7 @@ module "my_vpc"{
 
     name = "devops-vpc"
     cidr = "10.0.0.0/24"
-    azs = var.az
+    azs = ["ap-southeast-1a"]
     public_subnets  = ["10.0.0.0/25"]
     private_subnets = ["10.0.0.128/25"]
     map_public_ip_on_launch = true
