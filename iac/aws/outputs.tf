@@ -1,11 +1,7 @@
 output "webserver_ip" { value = module.webserver.public_ip }
 //output "ctrl_ip" { value = module.ctrl.public_ip }
 output "web_private_ip" {
-  value = module.web.private_ip
-}
-
-output "web_elastic_ip" {
-  value = module.webserver.public_ip
+  value = module.webserver.private_ip
 }
 
 output "controller_private_ip" {
