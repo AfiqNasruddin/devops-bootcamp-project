@@ -19,6 +19,7 @@ module "webserver" {
   ami                    = data.aws_ami.my_ami.id
   instance_type          = var.instance_type
   private_ip             = "10.0.0.5"
+  create_eip             = true
   subnet_id              = module.my_vpc.public_subnets[0]
   create_security_group  = false
   vpc_security_group_ids = [module.public_sg.id]
