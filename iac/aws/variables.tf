@@ -19,13 +19,13 @@ variable "ecr_repository_name" {
 variable "cidr_block_my_vpc" {
   description = "CIDR block untuk my_vpc"
   type        = string
-  default     = "10.0.0.0/16"
+  default     = "10.0.0.0/24"
 }
 
 variable "subnet_cidr_block_public" {
   description = "CIDR block untuk subnet publik"
   type        = string
-  default     = "10.0.0.0/16"
+  default     = "10.0.0.0/25"
 }
 
 variable "subnet_cidr_block_private" {
