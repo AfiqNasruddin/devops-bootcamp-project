@@ -1,7 +1,7 @@
 variable "az" {
   description = "Availability Zone untuk semua subnet"
   type        = string
-  default     = "ap-southeast-1a"
+  default     = "ap-southeast-1"
 }
 
 variable "s3_bucket_name" {
