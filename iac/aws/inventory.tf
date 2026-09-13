@@ -1,7 +1,8 @@
 resource "local_file" "inventory" {
   filename = "inventory.ini"
   content = templatefile("inventory.ini.tftpl", {
-    node1_ip = module.node1.public_ip
-    node2_ip = module.node2.public_ip
+    webserver_ip = module.webserver.public_ip
+    ctrl_ip = module.ctrl.public_ip
+    mon_ip = module.mon.public_ip
   })
 }

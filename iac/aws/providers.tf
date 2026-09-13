@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.0"
     }
+    local = {
+    source  = "hashicorp/local"
+    version = "~> 2.9"
+    } 
   }
   backend "s3" {
     bucket       = "devops-bootcamp-terraform-afiq"
@@ -15,6 +19,12 @@ terraform {
 }
 provider "aws" {
   region = "ap-southeast-1"
+  default_tags {
+    tags = {
+      Project   = "devops-bootcamp-final-afiq"
+      ManagedBy = "terraform"
+    }
+}
 }
 
 data "aws_caller_identity" "my_account" {}
