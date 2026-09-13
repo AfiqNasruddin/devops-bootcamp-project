@@ -17,7 +17,7 @@ provider "aws" {
   region = "ap-southeast-1a"
   default_tags {
     tags = {
-      Project   = devops-bootcamp-final-afiq
+      Project   = "devops-bootcamp-final-afiq"
       ManagedBy = "terraform"
     }
 }

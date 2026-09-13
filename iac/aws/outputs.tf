@@ -1,8 +1,8 @@
-output "web_ip" { value = module.web.public_ip }
+output "webserver_ip" { value = module.webserver.public_ip }
 //output "ctrl_ip" { value = module.ctrl.public_ip }
 
 output "ssm_command_1" {
-  value = "aws ssm start-session --target ${module.web.id}"
+  value = "aws ssm start-session --target ${module.webserver.id}"
 }
 
 output "ssm_command_2" {
