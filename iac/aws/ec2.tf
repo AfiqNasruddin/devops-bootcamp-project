@@ -34,7 +34,7 @@ module "mon" {
   name                   = "mon"
   ami                    = data.aws_ami.my_ami.id
   instance_type          = var.instance_type
-  subnet_id              = module.my_vpc.public_subnets[0]
+  subnet_id              = module.my_vpc.private_subnets[0]
   create_security_group  = false
   private_ip             = "10.0.0.136"
   vpc_security_group_ids = [module.private_sg.id]
@@ -49,7 +49,7 @@ module "ctrl" {
   name                   = "ctrl"
   ami                    = data.aws_ami.my_ami.id
   instance_type          = var.instance_type
-  subnet_id              = module.my_vpc.public_subnets[0]
+  subnet_id              = module.my_vpc.private_subnets[0]
   create_security_group  = false
   private_ip             = "10.0.0.135"
   vpc_security_group_ids = [module.private_sg.id]
