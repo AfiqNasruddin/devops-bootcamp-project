@@ -2,7 +2,7 @@ module "my_vpc"{
     source = "terraform-aws-modules/vpc/aws"
     version = "~> 6.0"
 
-    name = "devops-vpc"
+    name = "vpc-devops"
     cidr = var.cidr_block_my_vpc
     azs = [var.az]
     public_subnets  = [var.subnet_cidr_block_public]
@@ -19,7 +19,7 @@ module "my_vpc"{
     public_route_table_tags  = { Name = "devops-public-route" }
     private_route_table_tags = { Name = "devops-private-route" }
 
-    tags = { Name = "devops-vpc" }
+    tags = { Name = "vpc-devops" }
     
 }
 
