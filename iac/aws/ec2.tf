@@ -1,27 +1,3 @@
-resource "aws_iam_role" "ec2_ssm_role" {
-  name = "tf-ec2-ssm-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action    = "sts:AssumeRole"
-      Effect    = "Allow"
-      Principal = { Service = "ec2.amazonaws.com" }
-    }]
-  })
-}
-
-resource "aws_iam_policy_attachment" "ssm_attachment" {
-  name       = "tf-SSM-Policy-Attachment"
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  roles      = [aws_iam_role.ec2_ssm_role.name]
-}
-
-resource "aws_iam_instance_profile" "ec2_ssm_profile" {
-  name = "tf-ec2-ssm-profile"
-  role = aws_iam_role.ec2_ssm_role.name
-}
-
 data "aws_ami" "my_ami" {
   most_recent = true
   owners      = ["099720109477"]
@@ -32,47 +8,51 @@ data "aws_ami" "my_ami" {
   }
 }
 
-resource "aws_instance" "web01" {
-  ami                    = data.aws_ami.my_ami.id
-  instance_type          = "t3.micro"
-  subnet_id              = module.my_vpc.public_subnets[0]
-  vpc_security_group_ids = [module.my_sg.id]
-  iam_instance_profile   = aws_iam_instance_profile.ec2_ssm_profile.name
-
-  user_data = templatefile("userdata.sh", {
-    rackula_image = "ghcr.io/rackulalives/rackula:latest"
-    rackula_port  = "8080"
-  })
-
-  tags = { Name = "devops-web01" }
+data "aws_iam_instance_profile" "my_ssm_profile" {
+  name = "EC2-SSM-Role-devops"
 }
 
-resource "aws_instance" "ansible_ctrl" {
+module "webserver" {
+  source                 = "terraform-aws-modules/ec2-instance/aws"
+  version                = "~> 6.0"
+  name                   = "webserver"
   ami                    = data.aws_ami.my_ami.id
-  instance_type          = "t3.micro"
+  instance_type          = var.instance_type
+  private_ip             = "10.0.0.5"
   subnet_id              = module.my_vpc.public_subnets[0]
-  vpc_security_group_ids = [module.my_sg.id]
-  iam_instance_profile   = aws_iam_instance_profile.ec2_ssm_profile.name
-
-  user_data = templatefile("userdata.sh", {
-    rackula_image = "ghcr.io/rackulalives/rackula:latest"
-    rackula_port  = "8080"
-  })
-
-  tags = { Name = "devops-ansible-ctrl" }
+  create_security_group  = false
+  vpc_security_group_ids = [module.public_sg.id]
+  key_name               = "afiq"
+  tags                   = { Name = "webserver" }
+  iam_instance_profile   = data.aws_iam_instance_profile.my_ssm_profile.name
 }
 
-resource "aws_instance" "ansible_ctrl" {
+module "mon" {
+  source                 = "terraform-aws-modules/ec2-instance/aws"
+  version                = "~> 6.0"
+  name                   = "mon"
   ami                    = data.aws_ami.my_ami.id
-  instance_type          = "t3.micro"
+  instance_type          = var.instance_type
   subnet_id              = module.my_vpc.public_subnets[0]
-  vpc_security_group_ids = [module.my_sg.id]
-  iam_instance_profile   = aws_iam_instance_profile.ec2_ssm_profile.name
+  create_security_group  = false
+  private_ip             = "10.0.0.136"
+  vpc_security_group_ids = [module.private_sg.id]
+  key_name               = "afiq"
+  tags                   = { Name = "mon" }
+  iam_instance_profile   = data.aws_iam_instance_profile.my_ssm_profile.name
+}
 
-  user_data = templatefile("userdata.sh", {
-    rackula_image = "ghcr.io/rackulalives/rackula:latest"
-    rackula_port  = "8080"
-  })
-
-  tags = { Name = "devops-ansible-ctrl" }
+module "ctrl" {
+  source                 = "terraform-aws-modules/ec2-instance/aws"
+  version                = "~> 6.0"
+  name                   = "ctrl"
+  ami                    = data.aws_ami.my_ami.id
+  instance_type          = var.instance_type
+  subnet_id              = module.my_vpc.public_subnets[0]
+  create_security_group  = false
+  private_ip             = "10.0.0.135"
+  vpc_security_group_ids = [module.private_sg.id]
+  key_name               = "afiq"
+  tags                   = { Name = "ctrl" }
+  iam_instance_profile   = data.aws_iam_instance_profile.my_ssm_profile.name
 }
