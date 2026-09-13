@@ -9,6 +9,12 @@ module "public_sg" {
 
   ingress_rules = {
     http = {
+      cidr_ipv4   = "0.0.0.0/0"
+      ip_protocol = "tcp"
+      from_port   = 80
+      to_port     = 80
+    }
+    node_exporter = {
       cidr_ipv4   = "10.0.0.136/32"
       ip_protocol = "tcp"
       from_port   = 9100
