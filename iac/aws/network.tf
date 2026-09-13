@@ -3,10 +3,10 @@ module "my_vpc"{
     version = "~> 6.0"
 
     name = "devops-vpc"
-    cidr = "10.0.0.0/24"
-    azs = ["ap-southeast-1a"]
-    public_subnets  = ["10.0.0.0/25"]
-    private_subnets = ["10.0.0.128/25"]
+    cidr = var.cidr_block_my_vpc
+    azs = [var.az]
+    public_subnets  = [var.subnet_cidr_block_public]
+    private_subnets = [var.subnet_cidr_block_private]
     map_public_ip_on_launch = true
     enable_nat_gateway      = false
     single_nat_gateway      = false

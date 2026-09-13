@@ -7,14 +7,20 @@ terraform {
     }
   }
   backend "s3" {
-    bucket       = "devops-bootcamp-terraform-afiq"
+    bucket       = var.s3_bucket_name
     key          = "project/terraform.tfstate"
-    region       = "ap-southeast-1"
+    region       = var.az
     use_lockfile = true
   }
 }
 provider "aws" {
-  region = "ap-southeast-1"
+  region = var.az
+  default_tags {
+    tags = {
+      Project   = var.s3_bucket_name
+      ManagedBy = "terraform"
+    }
+}
 }
 
 data "aws_caller_identity" "my_account" {}
