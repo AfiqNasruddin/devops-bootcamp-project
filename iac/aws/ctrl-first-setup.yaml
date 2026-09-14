@@ -1,0 +1,27 @@
+name: Prepare Ansible controller
+  hosts: ctrl
+  become: true
+  gather_facts: true
+  tasks:
+    - name: update apt cache and install required packages
+      ansible.builtin.apt:
+        name:
+          - git
+          - python3
+          - python3-pip
+          - python3-venv
+        state: present
+        update_cache: true
+
+    - name: Ansible via pip
+      ansible.builtin.pip:
+        name:
+          - ansible
+        extra_args: --break-system-packages
+        state: present
+
+    - name: Install Galaxy role geerlingguy.docker
+      ansible.builtin.command: ansible-galaxy role install geerlingguy.docker
+      register: galaxy
+      changed_when: "'was installed successfully' in galaxy.stdout"
+      failed_when: galaxy.rc != 0 and 'already installed' not in (galaxy.stderr ~ galaxy.stdout)
