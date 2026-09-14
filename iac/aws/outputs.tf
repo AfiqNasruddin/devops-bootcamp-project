@@ -12,14 +12,14 @@ output "monitoring_private_ip" {
   value = module.mon.private_ip
 }
 
-output "ssm_command_1" {
+output "ssm_webserver" {
   value = "aws ssm start-session --target ${module.webserver.id}"
 }
 
-output "ssm_command_2" {
+output "ssm_ctrl" {
   value = "aws ssm start-session --target ${module.ctrl.id}"
 }
 
-output "ssm_command_3" {
+output "ssm_mon" {
   value = "aws ssm start-session --target ${module.mon.id}"
 }
