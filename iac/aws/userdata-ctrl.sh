@@ -1,3 +1,5 @@
+##Deprecated: Use ctrl-first-setup.yaml instead##
+
 #!/bin/bash
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
