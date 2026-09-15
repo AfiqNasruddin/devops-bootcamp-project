@@ -41,13 +41,13 @@ module "private_sg" {
   vpc_id          = module.my_vpc.vpc_id
 
   ingress_rules = {
-    ssh = {
+    ssh_vpc = {
       cidr_ipv4   = var.subnet_cidr
       ip_protocol = "tcp"
       from_port   = 22
       to_port     = 22
     }
-    ssh = {
+    ssh_laptop = {
       cidr_ipv4   = "${chomp(data.http.myip.response_body)}/32"
       ip_protocol = "tcp"
       from_port   = 22
