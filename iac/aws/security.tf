@@ -47,9 +47,20 @@ module "private_sg" {
       from_port   = 22
       to_port     = 22
     }
+    ssh = {
+      cidr_ipv4   = "${chomp(data.http.myip.response_body)}/32"
+      ip_protocol = "tcp"
+      from_port   = 22
+      to_port     = 22
+    }
+
   }
   egress_rules = {
     all = { cidr_ipv4 = "0.0.0.0/0", ip_protocol = "-1" }
   }
   tags = { Name = "devops-private-sg" }
+}
+
+data "http" "myip" {
+  url = "https://checkip.amazonaws.com/"
 }
