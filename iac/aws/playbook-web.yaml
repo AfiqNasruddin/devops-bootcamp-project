@@ -1,0 +1,51 @@
+---
+- name: Prepare Webserver
+  hosts: webserver
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Update apt cache and upgrade packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        cache_valid_time: 3600
+
+    - name: Clone Oh My Zsh
+      ansible.builtin.git:
+        repo: https://github.com/ohmyzsh/ohmyzsh.git
+        dest: /home/ubuntu/.oh-my-zsh
+        version: master
+      become_user: ubuntu
+
+    - name: Install Oh My Zsh default zshrc
+      ansible.builtin.copy:
+        src: /home/ubuntu/.oh-my-zsh/templates/zshrc.zsh-template
+        dest: /home/ubuntu/.zshrc
+        remote_src: true
+        force: false
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Set ubuntu login shell to zsh
+      ansible.builtin.user:
+        name: ubuntu
+        shell: /usr/bin/zsh
+    
+    - name: Install Docker using Ansible Galaxy role
+      ansible.builtin.include_role:
+        name: geerlingguy.docker
+      vars:
+        docker_install_compose: true
+
+    - name: Clone devops-bootcamp-project
+      ansible.builtin.git:
+        repo: https://github.com/AfiqNasruddin/devops-bootcamp-project.git
+        dest: /home/ubuntu/devops-bootcamp-project
+      become_user: ubuntu
+
+    - name: Clone infratify/ship repository
+      ansible.builtin.git:
+        repo: https://github.com/Infratify/ship.git
+        dest: /home/ubuntu/infratify-ship
+      become_user: ubuntu
