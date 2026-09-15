@@ -25,7 +25,7 @@ module "public_sg" {
       ip_protocol = "tcp"
       from_port   = 22
       to_port     = 22
-  }
+    }
   }
   egress_rules = {
     all = { cidr_ipv4 = "0.0.0.0/0", ip_protocol = "-1" }
@@ -46,7 +46,7 @@ module "private_sg" {
       ip_protocol = "tcp"
       from_port   = 22
       to_port     = 22
-  }
+    }
   }
   egress_rules = {
     all = { cidr_ipv4 = "0.0.0.0/0", ip_protocol = "-1" }
