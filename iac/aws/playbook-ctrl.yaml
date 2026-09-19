@@ -10,7 +10,7 @@
         upgrade: dist
         cache_valid_time: 3600
 
-    - name: Install Ansible prerequisites
+    - name: Install prerequisites
       ansible.builtin.apt:
         name:
           - git
@@ -21,6 +21,11 @@
           - software-properties-common
           - zsh
         state: present
+
+    - name: Set ubuntu login shell to zsh
+      ansible.builtin.user:
+        name: ubuntu
+        shell: /usr/bin/zsh
 
     - name: Clone Oh My Zsh
       ansible.builtin.git:
@@ -38,11 +43,6 @@
         owner: ubuntu
         group: ubuntu
         mode: "0644"
-
-    - name: Set ubuntu login shell to zsh
-      ansible.builtin.user:
-        name: ubuntu
-        shell: /usr/bin/zsh
 
     - name: Install Ansible from apt repository
       ansible.builtin.apt:
@@ -69,3 +69,12 @@
         repo: https://github.com/AfiqNasruddin/devops-bootcamp-project.git
         dest: /home/ubuntu/devops-bootcamp-project
       become_user: ubuntu
+
+    - name: Install Ansible Galaxy requirements
+      ansible.builtin.command:
+        cmd: ansible-galaxy install -r iac/aws/requirements.yaml
+        chdir: /home/ubuntu/devops-bootcamp-project
+      become_user: ubuntu
+      register: galaxy
+      changed_when: "'installed' in galaxy.stdout | default('')"
+      failed_when: galaxy.rc != 0 and 'Could not find' not in (galaxy.stderr | default(''))
