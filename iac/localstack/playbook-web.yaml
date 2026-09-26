@@ -9,8 +9,24 @@
     image_tag: latest
     app_name: ship
     app_host_port: 80
-    app_container_port: 8080
+    app_container_port: 80
+    app_image: nginx:latest
+    use_localstack_ecr_image: false
+    aws_access_key: test
+    aws_secret_key: test
   tasks:
+    - name: Set LocalStack endpoint from Docker gateway
+      ansible.builtin.set_fact:
+        localstack_endpoint: "http://{{ ansible_default_ipv4.gateway }}:4566"
+
+    - name: Ensure ubuntu user exists
+      ansible.builtin.user:
+        name: ubuntu
+        shell: /usr/bin/bash
+        create_home: true
+        groups: sudo
+        append: true
+
     - name: Update apt cache and upgrade packages
       ansible.builtin.apt:
         update_cache: true
@@ -52,17 +68,30 @@
         group: ubuntu
         mode: "0644"
 
+    - name: Check for existing Docker socket
+      ansible.builtin.stat:
+        path: /var/run/docker.sock
+      register: docker_sock
+
     - name: Install Docker
       ansible.builtin.include_role:
         name: geerlingguy.docker
       vars:
         docker_users:
           - ubuntu
+      when: not docker_sock.stat.exists
 
     - name: Wait for Docker socket
       ansible.builtin.wait_for:
         path: /var/run/docker.sock
         timeout: 90
+
+    - name: Install Docker CLI and Python SDK
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - python3-docker
+        state: present
 
     - name: Install AWS CLI v2
       ansible.builtin.shell: |
@@ -73,40 +102,59 @@
       args:
         creates: /usr/local/bin/aws
 
-    - name: Read AWS account ID
+    - name: Read LocalStack account ID
       ansible.builtin.command: aws sts get-caller-identity --query Account --output text
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+        AWS_ENDPOINT_URL: "{{ localstack_endpoint }}"
       register: aws_account
       changed_when: false
 
-    - name: Set ECR image name
+    - name: Set LocalStack ECR image name
       ansible.builtin.set_fact:
-        ecr_image: "{{ aws_account.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ ecr_repo }}:{{ image_tag }}"
+        ecr_registry: "{{ aws_account.stdout }}.dkr.ecr.{{ aws_region }}.localhost.localstack.cloud:4566"
+        ecr_image: "{{ aws_account.stdout }}.dkr.ecr.{{ aws_region }}.localhost.localstack.cloud:4566/{{ ecr_repo }}:{{ image_tag }}"
 
-    - name: Get ECR login password
+    - name: Get LocalStack ECR login password
       ansible.builtin.command: aws ecr get-login-password --region {{ aws_region }}
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_key }}"
+        AWS_DEFAULT_REGION: "{{ aws_region }}"
+        AWS_ENDPOINT_URL: "{{ localstack_endpoint }}"
       register: ecr_password
       changed_when: false
       no_log: true
+      when: use_localstack_ecr_image | bool
 
-    - name: Log in to ECR
+    - name: Log in to LocalStack ECR
       community.docker.docker_login:
-        registry_url: "{{ aws_account.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com"
+        registry_url: "{{ ecr_registry }}"
         username: AWS
         password: "{{ ecr_password.stdout }}"
       no_log: true
+      when: use_localstack_ecr_image | bool
 
-    - name: Pull application image
+    - name: Pull application image from LocalStack ECR
       community.docker.docker_image:
         name: "{{ ecr_image }}"
         source: pull
+      when: use_localstack_ecr_image | bool
+
+    - name: Set runtime image
+      ansible.builtin.set_fact:
+        runtime_image: "{{ ecr_image if (use_localstack_ecr_image | bool) else app_image }}"
+        runtime_container_port: "{{ 8080 if (use_localstack_ecr_image | bool) else app_container_port }}"
 
     - name: Run application container
       community.docker.docker_container:
         name: "{{ app_name }}"
-        image: "{{ ecr_image }}"
+        image: "{{ runtime_image }}"
         restart_policy: unless-stopped
         published_ports:
-          - "{{ app_host_port }}:{{ app_container_port }}"
+          - "{{ app_host_port }}:{{ runtime_container_port }}"
         state: started
 
     - name: Clone Infratify/ship

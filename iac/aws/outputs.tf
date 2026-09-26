@@ -1,6 +1,6 @@
-output "webserver_public_ip" { 
+output "webserver_public_ip" {
   value = module.webserver.public_ip
-  }
+}
 output "web_private_ip" {
   value = module.webserver.private_ip
 }
@@ -18,4 +18,8 @@ output "ssm_ctrl" {
 }
 output "ssm_mon" {
   value = "aws ssm start-session --target ${module.mon.id}"
+}
+
+output "iam_instance_profile_name" {
+  value = data.aws_iam_instance_profile.my_ssm_profile.name
 }

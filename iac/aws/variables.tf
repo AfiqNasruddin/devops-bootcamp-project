@@ -45,3 +45,9 @@ variable "instance_type" {
   type        = string
   default     = "t3.micro"
 }
+
+variable "iam_instance_profile_name" {
+  description = "Name of the existing EC2 instance profile used by SSM"
+  type        = string
+  default     = "EC2-SSM-Role-devops"
+}

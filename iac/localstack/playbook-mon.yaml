@@ -4,6 +4,14 @@
   become: true
   gather_facts: true
   tasks:
+    - name: Ensure ubuntu user exists
+      ansible.builtin.user:
+        name: ubuntu
+        shell: /usr/bin/bash
+        create_home: true
+        groups: sudo
+        append: true
+
     - name: Update apt cache and upgrade packages
       ansible.builtin.apt:
         update_cache: true
@@ -44,12 +52,25 @@
         group: ubuntu
         mode: "0644"
 
+    - name: Check for existing Docker socket
+      ansible.builtin.stat:
+        path: /var/run/docker.sock
+      register: docker_sock
+
     - name: Install Docker
       ansible.builtin.include_role:
         name: geerlingguy.docker
       vars:
         docker_users:
           - ubuntu
+      when: not docker_sock.stat.exists
+
+    - name: Install Docker CLI and Python SDK
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - python3-docker
+        state: present
 
     - name: Install node_exporter
       ansible.builtin.include_role:
@@ -64,8 +85,8 @@
         mode: "0755"
 
     - name: Install Prometheus config
-      ansible.builtin.copy:
-        src: mon-prometheus.yaml
+      ansible.builtin.template:
+        src: mon-prometheus.yaml.j2
         dest: /opt/monitoring/prometheus.yml
         mode: "0644"
 

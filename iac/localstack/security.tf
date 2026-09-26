@@ -6,7 +6,6 @@ module "public_sg" {
   use_name_prefix = false
   vpc_id          = module.my_vpc.vpc_id
 
-
   ingress_rules = {
     http = {
       cidr_ipv4   = "0.0.0.0/0"
@@ -15,13 +14,13 @@ module "public_sg" {
       to_port     = 80
     }
     node_exporter = {
-      cidr_ipv4   = "10.0.0.136/32"
+      cidr_ipv4   = "0.0.0.0/0"
       ip_protocol = "tcp"
       from_port   = 9100
       to_port     = 9100
     }
     ssh = {
-      cidr_ipv4   = var.subnet_cidr
+      cidr_ipv4   = "0.0.0.0/0"
       ip_protocol = "tcp"
       from_port   = 22
       to_port     = 22
@@ -32,6 +31,7 @@ module "public_sg" {
   }
   tags = { Name = "devops-public-sg" }
 }
+
 module "private_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 6.0"
@@ -41,32 +41,21 @@ module "private_sg" {
   vpc_id          = module.my_vpc.vpc_id
 
   ingress_rules = {
-    ssh_vpc = {
-      cidr_ipv4   = var.subnet_cidr
-      ip_protocol = "tcp"
-      from_port   = 22
-      to_port     = 22
-    }
-    ssh_laptop = {
-      cidr_ipv4   = "${chomp(data.http.myip.response_body)}/32"
+    ssh = {
+      cidr_ipv4   = "0.0.0.0/0"
       ip_protocol = "tcp"
       from_port   = 22
       to_port     = 22
     }
     node_exporter = {
-      cidr_ipv4   = "10.0.0.136/32"
+      cidr_ipv4   = "0.0.0.0/0"
       ip_protocol = "tcp"
       from_port   = 9100
       to_port     = 9100
     }
-
   }
   egress_rules = {
     all = { cidr_ipv4 = "0.0.0.0/0", ip_protocol = "-1" }
   }
   tags = { Name = "devops-private-sg" }
-}
-
-data "http" "myip" {
-  url = "https://checkip.amazonaws.com/"
 }

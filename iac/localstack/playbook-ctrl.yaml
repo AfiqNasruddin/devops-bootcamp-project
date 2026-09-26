@@ -4,6 +4,14 @@
   become: true
   gather_facts: true
   tasks:
+    - name: Ensure ubuntu user exists
+      ansible.builtin.user:
+        name: ubuntu
+        shell: /usr/bin/bash
+        create_home: true
+        groups: sudo
+        append: true
+
     - name: Update apt cache and upgrade packages
       ansible.builtin.apt:
         update_cache: true
@@ -72,7 +80,7 @@
 
     - name: Install Ansible Galaxy requirements
       ansible.builtin.command:
-        cmd: ansible-galaxy install -r iac/aws/requirements.yaml
+        cmd: ansible-galaxy install -r iac/localstack/requirements.yaml
         chdir: /home/ubuntu/devops-bootcamp-project
       become_user: ubuntu
       register: galaxy
