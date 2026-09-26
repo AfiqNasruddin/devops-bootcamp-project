@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "terraform": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@hashicorp/terraform-mcp-server"]
+    }
+  }
+}
