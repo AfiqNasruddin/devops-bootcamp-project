@@ -44,6 +44,7 @@ terraform.rc
 # planout
 
 .env
+.env.*
 *.pem
 *.key
 id_rsa
@@ -52,4 +53,9 @@ id_ed25519
 credentials
 terraform/env/aws.tfvars
 terraform/generated-key.pem
-inventory.ini
+*.bak
+.DS_Store
+__pycache__/
+*.pyc
+*.retry
+*.tfplan

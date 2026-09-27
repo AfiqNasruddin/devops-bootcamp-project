@@ -1,0 +1,81 @@
+---
+- name: Prepare Ansible controller
+  hosts: ctrl
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Update apt cache and upgrade packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        cache_valid_time: 3600
+
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        name:
+          - git
+          - curl
+          - python3
+          - python3-pip
+          - python3-venv
+          - software-properties-common
+          - zsh
+        state: present
+
+    - name: Set ubuntu login shell to zsh
+      ansible.builtin.user:
+        name: ubuntu
+        shell: /usr/bin/zsh
+
+    - name: Clone Oh My Zsh
+      ansible.builtin.git:
+        repo: https://github.com/ohmyzsh/ohmyzsh.git
+        dest: /home/ubuntu/.oh-my-zsh
+        version: master
+      become_user: ubuntu
+
+    - name: Install Oh My Zsh default zshrc
+      ansible.builtin.copy:
+        src: /home/ubuntu/.oh-my-zsh/templates/zshrc.zsh-template
+        dest: /home/ubuntu/.zshrc
+        remote_src: true
+        force: false
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Install Ansible from apt repository
+      ansible.builtin.apt:
+        name: ansible
+        state: present
+        update_cache: true
+
+    - name: Test SSH connectivity from ctrl to webserver
+      ansible.builtin.wait_for:
+        host: "{{ hostvars['webserver']['ansible_host'] }}"
+        port: 22
+        timeout: 30
+        state: started
+
+    - name: Test SSH connectivity from ctrl to mon
+      ansible.builtin.wait_for:
+        host: "{{ hostvars['mon']['ansible_host'] }}"
+        port: 22
+        timeout: 30
+        state: started
+
+    - name: Clone devops-bootcamp-project
+      ansible.builtin.git:
+        repo: https://github.com/AfiqNasruddin/devops-bootcamp-project.git
+        dest: /home/ubuntu/devops-bootcamp-project
+        version: "{{ target_branch | default('main') }}"
+      become_user: ubuntu
+
+    - name: Install Ansible Galaxy requirements
+      ansible.builtin.command:
+        cmd: ansible-galaxy install -r iac/aws/requirements.yaml
+        chdir: /home/ubuntu/devops-bootcamp-project
+      become_user: ubuntu
+      register: galaxy
+      changed_when: "'installed' in galaxy.stdout | default('')")
+      failed_when: galaxy.rc != 0 and 'Could not find' not in (galaxy.stderr | default(''))

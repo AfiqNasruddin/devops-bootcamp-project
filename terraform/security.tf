@@ -41,15 +41,32 @@ module "private_sg" {
   vpc_id          = module.my_vpc.vpc_id
 
   ingress_rules = {
-    ssh = {
+    ssh_vpc = {
       cidr_ipv4   = var.subnet_cidr
       ip_protocol = "tcp"
       from_port   = 22
       to_port     = 22
     }
+    ssh_laptop = {
+      cidr_ipv4   = "${chomp(data.http.myip.response_body)}/32"
+      ip_protocol = "tcp"
+      from_port   = 22
+      to_port     = 22
+    }
+    node_exporter = {
+      cidr_ipv4   = "10.0.0.136/32"
+      ip_protocol = "tcp"
+      from_port   = 9100
+      to_port     = 9100
+    }
+
   }
   egress_rules = {
     all = { cidr_ipv4 = "0.0.0.0/0", ip_protocol = "-1" }
   }
   tags = { Name = "devops-private-sg" }
+}
+
+data "http" "myip" {
+  url = "https://checkip.amazonaws.com/"
 }

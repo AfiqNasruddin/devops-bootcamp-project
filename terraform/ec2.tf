@@ -9,7 +9,7 @@ data "aws_ami" "my_ami" {
 }
 
 data "aws_iam_instance_profile" "my_ssm_profile" {
-  name = "EC2-SSM-Role-devops"
+  name = var.iam_instance_profile_name
 }
 
 module "webserver" {
@@ -55,6 +55,6 @@ module "ctrl" {
   vpc_security_group_ids = [module.private_sg.id]
   key_name               = "afiq"
   tags                   = { Name = "ctrl" }
-  user_data              = file("${path.module}/userdata-ctrl.sh")
-  iam_instance_profile   = data.aws_iam_instance_profile.my_ssm_profile.name
+  //user_data              = file("${path.module}/userdata-ctrl.sh")
+  iam_instance_profile = data.aws_iam_instance_profile.my_ssm_profile.name
 }

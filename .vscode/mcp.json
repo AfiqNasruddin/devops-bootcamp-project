@@ -1,0 +1,19 @@
+{
+  "servers": {
+    "terraform": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@hashicorp/terraform-mcp-server"]
+    },
+    "localstack": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@localstack/localstack-mcp-server"],
+      "env": {
+        "LOCALSTACK_AUTH_TOKEN": "${env:LOCALSTACK_AUTH_TOKEN}",
+        "LOCALSTACK_HOSTNAME": "localhost",
+        "LOCALSTACK_PORT": "4566"
+      }
+    }
+  }
+}
