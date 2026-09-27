@@ -68,6 +68,7 @@
       ansible.builtin.git:
         repo: https://github.com/AfiqNasruddin/devops-bootcamp-project.git
         dest: /home/ubuntu/devops-bootcamp-project
+        version: "{{ target_branch | default('main') }}"
       become_user: ubuntu
 
     - name: Install Ansible Galaxy requirements
