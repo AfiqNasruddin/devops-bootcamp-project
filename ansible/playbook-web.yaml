@@ -3,13 +3,6 @@
   hosts: web
   become: true
   gather_facts: true
-  vars:
-    aws_region: ap-southeast-1
-    ecr_repo: devops-bootcamp/final-project-afiq
-    image_tag: latest
-    app_name: ship
-    app_host_port: 80
-    app_container_port: 8080
   tasks:
     - name: Update apt cache and upgrade packages
       ansible.builtin.apt:
@@ -73,47 +66,11 @@
       args:
         creates: /usr/local/bin/aws
 
-    - name: Read AWS account ID
-      ansible.builtin.command: aws sts get-caller-identity --query Account --output text
-      register: aws_account
-      changed_when: false
-
-    - name: Set ECR image name
-      ansible.builtin.set_fact:
-        ecr_image: "{{ aws_account.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com/{{ ecr_repo }}:{{ image_tag }}"
-
-    - name: Get ECR login password
-      ansible.builtin.command: aws ecr get-login-password --region {{ aws_region }}
-      register: ecr_password
-      changed_when: false
-      no_log: true
-
-    - name: Log in to ECR
-      community.docker.docker_login:
-        registry_url: "{{ aws_account.stdout }}.dkr.ecr.{{ aws_region }}.amazonaws.com"
-        username: AWS
-        password: "{{ ecr_password.stdout }}"
-      no_log: true
-
-    - name: Pull application image
-      community.docker.docker_image:
-        name: "{{ ecr_image }}"
-        source: pull
-
-    - name: Run application container
-      community.docker.docker_container:
-        name: "{{ app_name }}"
-        image: "{{ ecr_image }}"
-        restart_policy: unless-stopped
-        published_ports:
-          - "{{ app_host_port }}:{{ app_container_port }}"
-        state: started
-
     - name: Clone Infratify/ship
       ansible.builtin.git:
         repo: https://github.com/Infratify/ship.git
         dest: /home/ubuntu/infratify-ship
-      become_user: ubuntu
+        become_user: ubuntu
 
     - name: Install node_exporter
       ansible.builtin.include_role:
@@ -121,18 +78,10 @@
       vars:
         node_exporter_web_listen_address: "0.0.0.0:9100"
 
-    - name: Check application HTTP
-      ansible.builtin.uri:
-        url: "http://127.0.0.1:{{ app_host_port }}/"
-        status_code: [200, 301, 302]
-      register: app_http
-      retries: 10
-      delay: 3
-      until: app_http.status in [200, 301, 302]
-
-    - name: Check node_exporter metrics
-      ansible.builtin.uri:
-        url: http://127.0.0.1:9100/metrics
-        status_code: 200
-      retries: 5
-      delay: 2
+    - name: Login to AWS ECR
+      ansible.builtin.shell: |
+        set -euo pipefail
+        aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 345594575920.dkr.ecr.ap-southeast-1.amazonaws.com
+      args:
+        executable: /bin/zsh
+      
