@@ -65,7 +65,7 @@
 
     - name: Install Prometheus config
       ansible.builtin.copy:
-        src: mon-prometheus.yaml
+        src: mon-prometheus.yaml.j2
         dest: /opt/monitoring/prometheus.yml
         mode: "0644"
 
