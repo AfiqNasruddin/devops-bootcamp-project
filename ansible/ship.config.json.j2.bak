@@ -1,0 +1,5 @@
+vars:
+    ship_name: "AfiqNasruddin"
+    ship_color: "#e42b0a"
+    ship_model: "interceptor"
+    ship_emblem: "star"
