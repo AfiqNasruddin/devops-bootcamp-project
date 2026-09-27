@@ -77,5 +77,5 @@
         chdir: /home/ubuntu/devops-bootcamp-project
       become_user: ubuntu
       register: galaxy
-      changed_when: "'installed' in galaxy.stdout | default('')"
+      changed_when: "'installed' in galaxy.stdout | default('')")
       failed_when: galaxy.rc != 0 and 'Could not find' not in (galaxy.stderr | default(''))
