@@ -52,6 +52,4 @@ id_ed25519
 credentials
 terraform/env/aws.tfvars
 terraform/generated-key.pem
-inventory.ini/data/devops-bootcamp-project/iac/localstack
 .vscode/mcp.json
-inventory.ini
