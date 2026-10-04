@@ -1,19 +1,31 @@
+variable "region" {
+  description = "AWS region used by LocalStack"
+  type        = string
+  default     = "ap-southeast-1"
+}
+
 variable "az" {
-  description = "Availability Zone untuk semua subnet"
+  description = "Availability Zone for all subnets"
   type        = string
   default     = "ap-southeast-1a"
 }
 
-variable "s3_bucket_name" {
-  description = "Nama bucket S3 untuk menyimpan state Terraform"
+variable "localstack_endpoint" {
+  description = "Base endpoint for the LocalStack AWS APIs"
   type        = string
-  default     = "devops-bootcamp-terraform-afiq"
+  default     = "http://localhost:4566"
 }
 
-variable "ecr_repository_name" {
-  description = "Nama repository ECR untuk menyimpan image Docker"
+variable "localstack_access_key" {
+  description = "Access key used by LocalStack"
   type        = string
-  default     = "devops-bootcamp/final-project-afiq"
+  default     = "test"
+}
+
+variable "localstack_secret_key" {
+  description = "Secret key used by LocalStack"
+  type        = string
+  default     = "test"
 }
 
 variable "cidr_block_my_vpc" {
@@ -35,19 +47,25 @@ variable "subnet_cidr_block_private" {
 }
 
 variable "subnet_cidr" {
-  description = "CIDR block"
+  description = "CIDR block allowed to access private instances"
   type        = string
   default     = "10.0.0.0/24"
 }
 
 variable "instance_type" {
-  description = "Jenis instance EC2"
+  description = "EC2 instance type"
   type        = string
   default     = "t3.micro"
 }
 
+variable "ami_id" {
+  description = "AMI ID registered in LocalStack for EC2 instances"
+  type        = string
+  default     = "ami-1e749f67"
+}
+
 variable "iam_instance_profile_name" {
-  description = "Name of the existing EC2 instance profile used by SSM"
+  description = "Name of the IAM instance profile used by EC2 instances"
   type        = string
   default     = "EC2-SSM-Role-devops"
 }

@@ -8,8 +8,7 @@ module "my_vpc" {
   public_subnets          = [var.subnet_cidr_block_public]
   private_subnets         = [var.subnet_cidr_block_private]
   map_public_ip_on_launch = true
-  enable_nat_gateway      = true
-  single_nat_gateway      = true
+  enable_nat_gateway      = false
   enable_vpn_gateway      = false
 
   igw_tags                 = { Name = "devops-igw" }
@@ -22,4 +21,3 @@ module "my_vpc" {
   tags = { Name = "devops-vpc" }
 
 }
-

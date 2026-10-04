@@ -9,20 +9,25 @@ terraform {
       source  = "hashicorp/local"
       version = "~> 2.9"
     }
-    http = {
-      source  = "hashicorp/http"
-      version = "~> 3.0"
-    }
-  }
-  backend "s3" {
-    bucket       = "devops-bootcamp-terraform-afiq"
-    key          = "project/terraform.tfstate"
-    region       = "ap-southeast-1"
-    use_lockfile = true
   }
 }
+
 provider "aws" {
-  region = "ap-southeast-1"
+  region                      = var.region
+  access_key                  = var.localstack_access_key
+  secret_key                  = var.localstack_secret_key
+  skip_credentials_validation = true
+  skip_region_validation      = true
+  skip_requesting_account_id  = true
+  skip_metadata_api_check     = true
+  s3_use_path_style           = true
+
+  endpoints {
+    ec2 = var.localstack_endpoint
+    iam = var.localstack_endpoint
+    sts = var.localstack_endpoint
+  }
+
   default_tags {
     tags = {
       Project   = "devops-bootcamp-final-afiq"
@@ -30,5 +35,3 @@ provider "aws" {
     }
   }
 }
-
-data "aws_caller_identity" "my_account" {}

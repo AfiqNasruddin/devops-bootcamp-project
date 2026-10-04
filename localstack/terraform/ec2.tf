@@ -1,60 +1,39 @@
-data "aws_ami" "my_ami" {
-  most_recent = true
-  owners      = ["099720109477"]
+resource "aws_instance" "webserver" {
+  ami                         = var.ami_id
+  instance_type               = var.instance_type
+  private_ip                  = "10.0.0.5"
+  subnet_id                   = module.my_vpc.public_subnets[0]
+  associate_public_ip_address = true
+  vpc_security_group_ids      = [module.public_sg.id]
+  iam_instance_profile        = aws_iam_instance_profile.ec2.name
 
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
+  tags = {
+    Name = "webserver"
   }
 }
 
-data "aws_iam_instance_profile" "my_ssm_profile" {
-  name = var.iam_instance_profile_name
-}
-
-module "webserver" {
-  source                 = "terraform-aws-modules/ec2-instance/aws"
-  version                = "~> 6.0"
-  name                   = "webserver"
-  ami                    = data.aws_ami.my_ami.id
-  instance_type          = var.instance_type
-  private_ip             = "10.0.0.5"
-  create_eip             = true
-  subnet_id              = module.my_vpc.public_subnets[0]
-  create_security_group  = false
-  vpc_security_group_ids = [module.public_sg.id]
-  key_name               = "afiq"
-  tags                   = { Name = "webserver" }
-  iam_instance_profile   = data.aws_iam_instance_profile.my_ssm_profile.name
-}
-
-module "mon" {
-  source                 = "terraform-aws-modules/ec2-instance/aws"
-  version                = "~> 6.0"
-  name                   = "mon"
-  ami                    = data.aws_ami.my_ami.id
+resource "aws_instance" "mon" {
+  ami                    = var.ami_id
   instance_type          = var.instance_type
   private_ip             = "10.0.0.136"
   subnet_id              = module.my_vpc.private_subnets[0]
-  create_security_group  = false
   vpc_security_group_ids = [module.private_sg.id]
-  key_name               = "afiq"
-  tags                   = { Name = "mon" }
-  iam_instance_profile   = data.aws_iam_instance_profile.my_ssm_profile.name
+  iam_instance_profile   = aws_iam_instance_profile.ec2.name
+
+  tags = {
+    Name = "mon"
+  }
 }
 
-module "ctrl" {
-  source                 = "terraform-aws-modules/ec2-instance/aws"
-  version                = "~> 6.0"
-  name                   = "ctrl"
-  ami                    = data.aws_ami.my_ami.id
+resource "aws_instance" "ctrl" {
+  ami                    = var.ami_id
   instance_type          = var.instance_type
-  subnet_id              = module.my_vpc.private_subnets[0]
-  create_security_group  = false
   private_ip             = "10.0.0.135"
+  subnet_id              = module.my_vpc.private_subnets[0]
   vpc_security_group_ids = [module.private_sg.id]
-  key_name               = "afiq"
-  tags                   = { Name = "ctrl" }
-  //user_data              = file("${path.module}/userdata-ctrl.sh")
-  iam_instance_profile = data.aws_iam_instance_profile.my_ssm_profile.name
+  iam_instance_profile   = aws_iam_instance_profile.ec2.name
+
+  tags = {
+    Name = "ctrl"
+  }
 }

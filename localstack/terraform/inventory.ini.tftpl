@@ -2,7 +2,7 @@
 webserver ansible_host=${webserver_ip}
 
 [ctrl]
-ctrl ansible_host=${ctrl_id} ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ProxyCommand="aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p --region ap-southeast-1"'
+ctrl ansible_host=${ctrl_ip}
 
 [mon]
 mon ansible_host=${mon_ip}

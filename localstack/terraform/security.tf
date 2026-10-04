@@ -47,12 +47,6 @@ module "private_sg" {
       from_port   = 22
       to_port     = 22
     }
-    ssh_laptop = {
-      cidr_ipv4   = "${chomp(data.http.myip.response_body)}/32"
-      ip_protocol = "tcp"
-      from_port   = 22
-      to_port     = 22
-    }
     node_exporter = {
       cidr_ipv4   = "10.0.0.136/32"
       ip_protocol = "tcp"
@@ -65,8 +59,4 @@ module "private_sg" {
     all = { cidr_ipv4 = "0.0.0.0/0", ip_protocol = "-1" }
   }
   tags = { Name = "devops-private-sg" }
-}
-
-data "http" "myip" {
-  url = "https://checkip.amazonaws.com/"
 }
