@@ -1,64 +1,141 @@
-# devops-bootcamp-project
-DevOps Bootcamp Final Project
+# DevOps Bootcamp Final Project
 
-## GitHub Copilot and LocalStack MCP
+This repository contains a small AWS-based infrastructure project built with Terraform and Ansible. It provisions a three-node EC2 environment: a public-facing web server, a private automation controller, and a private monitoring node running Prometheus and Grafana.
 
-This repository includes MCP configuration for both the HashiCorp Terraform MCP
-server and the LocalStack MCP server in `.vscode/mcp.json`. The LocalStack
-server lets Copilot inspect and operate the LocalStack environment through
-natural-language requests, including checking service status, querying AWS
-resources, analyzing logs, and deploying or destroying local infrastructure.
+## Architecture
 
-### Configure the LocalStack token
+The deployment creates a VPC with:
 
-The token is intentionally read from the `LOCALSTACK_AUTH_TOKEN` environment
-variable and is not stored in this repository.
+- one public subnet for the web server
+- one private subnet for the controller and monitoring node
+- security groups for HTTP, SSH, and Node Exporter access
+- an SSM-enabled IAM instance profile used by EC2 instances
+
+The infrastructure is organized as follows:
+
+- `terraform/` contains the Terraform infrastructure code
+- `ansible/` contains the provisioning playbooks for the EC2 hosts
+- generated inventory and state files are created during Terraform runs
+
+## Repo structure
+
+```text
+.
+├── ansible/
+│   ├── ansible.cfg
+│   ├── mon-compose.yaml
+│   ├── mon-prometheus.yaml.j2
+│   ├── playbook-ctrl.yaml
+│   ├── playbook-mon.yaml
+│   ├── playbook-web.yaml
+│   └── requirements.yaml
+├── terraform/
+│   ├── ec2.tf
+│   ├── inventory.ini.tftpl
+│   ├── inventory.tf
+│   ├── network.tf
+│   ├── outputs.tf
+│   ├── providers.tf
+│   ├── security.tf
+│   ├── userdata-ctrl.sh
+│   ├── variables.tf
+│   └── .terraform/
+├── README.md
+├── terraform.tfstate
+└── .gitignore
+```
+
+## Components
+
+### Webserver
+- Public EC2 instance exposed on the internet
+- Runs the application entry point and is reachable via SSH over the VPC network
+- Includes Node Exporter for monitoring
+
+### Controller (`ctrl`)
+- Private EC2 instance used as the Ansible control node
+- Validates connectivity to other servers and prepares the environment
+- Clones the project repository and installs Ansible dependencies
+
+### Monitoring (`mon`)
+- Private EC2 instance running Docker-based Prometheus and Grafana
+- Collects metrics from the web server and itself via Node Exporter
+- Uses a Docker Compose configuration under `ansible/`
+
+## Prerequisites
+
+Before deploying, ensure the following are available:
+
+- Terraform >= 1.15
+- AWS CLI configured with valid credentials
+- An AWS account with access to create VPC, EC2, IAM, and security resources
+- SSH key available for the `afiq` key pair and the matching private key on your workstation
+- Ansible installed locally if you plan to run playbooks outside the controller instance
+
+## Deployment workflow
+
+Start in the Terraform directory:
 
 ```bash
-export LOCALSTACK_AUTH_TOKEN='your-token'
+cd terraform
+terraform init
+terraform plan
+terraform apply
 ```
 
-Start LocalStack on its normal endpoint before using the server:
+This creates the VPC, subnets, security groups, EC2 instances, and an Ansible inventory file. The Terraform configuration uses the AWS provider in `ap-southeast-1` and stores state in the S3 backend bucket `devops-bootcamp-terraform-afiq`.
+
+After apply, the generated inventory file can be used with Ansible from the repo root:
 
 ```bash
-curl http://localhost:4566/_localstack/health
+cd ..
+ansible-playbook -i terraform/inventory.ini ansible/playbook-web.yaml
+ansible-playbook -i terraform/inventory.ini ansible/playbook-ctrl.yaml
+ansible-playbook -i terraform/inventory.ini ansible/playbook-mon.yaml
 ```
 
-In VS Code, reload the window after setting the variable and confirm that the
-LocalStack MCP server is enabled in the Copilot/MCP tools view. In Copilot CLI,
-use `/mcp` to inspect the configured MCP servers and make sure the LocalStack
-server is available.
+## Useful outputs
 
-### Example Copilot requests
+Terraform outputs include:
 
-Use specific, bounded requests so it is clear which environment Copilot may
-change:
+- public IP of the web server
+- private IPs of the controller and monitoring host
+- SSM session commands for each instance
 
-```text
-Check the LocalStack service health and report the status of EC2, IAM, SSM, and VPC.
-```
-
-```text
-Inspect the LocalStack EC2 instances and show their instance IDs, private IPs,
-Docker-reachable addresses, and states. Do not modify resources.
-```
-
-```text
-Deploy the Terraform configuration in iac/localstack using LocalStack. Show the
-plan first and do not apply changes until I confirm.
-```
-
-```text
-Analyze recent LocalStack logs for failed EC2, VPC, or IAM requests.
-```
-
-The LocalStack MCP server uses `http://localhost:4566` by default. If the
-LocalStack endpoint is elsewhere, change `LOCALSTACK_HOSTNAME` and
-`LOCALSTACK_PORT` in `.vscode/mcp.json` or configure those variables in the
-client's MCP environment.
-
-Never commit the authentication token. Before committing changes, check:
+Example:
 
 ```bash
-git grep -n -I -E 'LOCALSTACK_AUTH_TOKEN|ls-ci' HEAD -- . || true
+cd terraform
+terraform output
+```
+
+## SSH and access
+
+The generated inventory uses the `ubuntu` user and the SSH private key configured in `ansible/inventory.ini` / `terraform/inventory.ini.tftpl`.
+
+For SSM access:
+
+```bash
+aws ssm start-session --target <instance-id> --region ap-southeast-1
+```
+
+## Monitoring
+
+The monitoring host installs Prometheus and Grafana through Docker Compose. The configuration files live in `ansible/mon-prometheus.yaml.j2` and `ansible/mon-compose.yaml`.
+
+## Notes
+
+- The project targets AWS, not LocalStack.
+- Default project metadata is tagged with:
+  - `Project = "devops-bootcamp-final-afiq"`
+  - `ManagedBy = "terraform"`
+- The repository is focused on infrastructure provisioning and configuration automation rather than an application codebase.
+
+## Cleanup
+
+To remove the deployed infrastructure:
+
+```bash
+cd terraform
+terraform destroy
 ```
