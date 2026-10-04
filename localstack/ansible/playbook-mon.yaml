@@ -1,0 +1,83 @@
+---
+- name: Prepare Monitoring server
+  hosts: mon
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Update apt cache and upgrade packages
+      ansible.builtin.apt:
+        update_cache: true
+        upgrade: dist
+        cache_valid_time: 3600
+
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        name:
+          - git
+          - curl
+          - python3
+          - python3-pip
+          - python3-venv
+          - software-properties-common
+          - zsh
+        state: present
+
+    - name: Set ubuntu login shell to zsh
+      ansible.builtin.user:
+        name: ubuntu
+        shell: /usr/bin/zsh
+
+    - name: Clone Oh My Zsh
+      ansible.builtin.git:
+        repo: https://github.com/ohmyzsh/ohmyzsh.git
+        dest: /home/ubuntu/.oh-my-zsh
+        version: master
+      become_user: ubuntu
+
+    - name: Install Oh My Zsh default zshrc
+      ansible.builtin.copy:
+        src: /home/ubuntu/.oh-my-zsh/templates/zshrc.zsh-template
+        dest: /home/ubuntu/.zshrc
+        remote_src: true
+        force: false
+        owner: ubuntu
+        group: ubuntu
+        mode: "0644"
+
+    - name: Install Docker
+      ansible.builtin.include_role:
+        name: geerlingguy.docker
+      vars:
+        docker_users:
+          - ubuntu
+
+    - name: Install node_exporter
+      ansible.builtin.include_role:
+        name: prometheus.prometheus.node_exporter
+      vars:
+        node_exporter_web_listen_address: "0.0.0.0:9100"
+
+    - name: Create monitoring directory
+      ansible.builtin.file:
+        path: /opt/monitoring
+        state: directory
+        mode: "0755"
+
+    - name: Install Prometheus config
+      ansible.builtin.copy:
+        src: mon-prometheus.yaml.j2
+        dest: /opt/monitoring/prometheus.yml
+        mode: "0644"
+
+    - name: Install Compose file
+      ansible.builtin.copy:
+        src: mon-compose.yaml
+        dest: /opt/monitoring/compose.yaml
+        mode: "0644"
+
+    - name: Start Prometheus and Grafana
+      ansible.builtin.command:
+        cmd: docker compose up -d
+        chdir: /opt/monitoring
+      register: compose_up
+      changed_when: "'Started' in compose_up.stdout or 'Created' in compose_up.stdout"
