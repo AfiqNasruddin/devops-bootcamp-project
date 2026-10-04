@@ -19,5 +19,4 @@ module "my_vpc" {
   private_route_table_tags = { Name = "devops-private-route" }
 
   tags = { Name = "devops-vpc" }
-
 }

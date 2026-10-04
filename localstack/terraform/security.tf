@@ -6,7 +6,6 @@ module "public_sg" {
   use_name_prefix = false
   vpc_id          = module.my_vpc.vpc_id
 
-
   ingress_rules = {
     http = {
       cidr_ipv4   = "0.0.0.0/0"
@@ -32,6 +31,7 @@ module "public_sg" {
   }
   tags = { Name = "devops-public-sg" }
 }
+
 module "private_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 6.0"
@@ -53,7 +53,6 @@ module "private_sg" {
       from_port   = 9100
       to_port     = 9100
     }
-
   }
   egress_rules = {
     all = { cidr_ipv4 = "0.0.0.0/0", ip_protocol = "-1" }

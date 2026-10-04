@@ -29,19 +29,19 @@ variable "localstack_secret_key" {
 }
 
 variable "cidr_block_my_vpc" {
-  description = "CIDR block untuk my_vpc"
+  description = "CIDR block für my_vpc"
   type        = string
   default     = "10.0.0.0/24"
 }
 
 variable "subnet_cidr_block_public" {
-  description = "CIDR block untuk subnet publik"
+  description = "CIDR block für public subnet"
   type        = string
   default     = "10.0.0.0/25"
 }
 
 variable "subnet_cidr_block_private" {
-  description = "CIDR block untuk subnet private"
+  description = "CIDR block für private subnet"
   type        = string
   default     = "10.0.0.128/25"
 }
