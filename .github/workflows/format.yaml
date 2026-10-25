@@ -1,0 +1,108 @@
+name: Format and syntax
+
+# Bonus: Format and syntax check for Terraform and Ansible files on pull requests and pushes to main or server-setup branches.
+on:
+  pull_request:
+  push:
+    branches: [main, function]
+    paths:
+      - "terraform/**"
+      - "ansible/**"
+      - "app/**"
+      - ".github/workflows/format.yaml"
+
+permissions:
+  contents: read
+  # Needed for github/codeql-action/upload-sarif. No-op without GitHub Code Security.
+  security-events: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.15.0"
+          terraform_wrapper: false
+      - name: terraform fmt
+        working-directory: terraform
+        run: terraform fmt -check -recursive
+      - name: Install Ansible
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ansible
+      - name: Ansible syntax
+        working-directory: ansible
+        run: |
+          ansible-playbook --syntax-check playbook.yml
+          ansible-playbook --syntax-check playbook-ctrl.yml
+          ansible-playbook --syntax-check playbook-web.yml
+          ansible-playbook --syntax-check playbook-mon.yml
+
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Trivy IaC misconfig
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          format: table
+      - name: Trivy filesystem (vulns + secrets)
+        if: always()
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+          skip-setup-trivy: true
+      - name: Trivy IaC SARIF
+        if: always()
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: trivy-config.sarif
+          exit-code: "0"
+          limit-severities-for-sarif: true
+          skip-setup-trivy: true
+      - name: Trivy filesystem SARIF
+        if: always()
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: sarif
+          output: trivy-fs.sarif
+          exit-code: "0"
+          limit-severities-for-sarif: true
+          skip-setup-trivy: true
+      # Uploads to the Security tab only if GitHub Code Security (or legacy GHAS) is enabled.
+      # continue-on-error: a 403 without that license must not fail the job.
+      - name: Upload Trivy IaC SARIF
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-config.sarif
+          category: trivy-config
+      - name: Upload Trivy filesystem SARIF
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-fs
