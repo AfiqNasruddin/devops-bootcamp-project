@@ -37,7 +37,7 @@ jobs:
       - name: Ansible syntax
         working-directory: ansible
         run: |
-          ansible-playbook --syntax-check playbook.yml
+          ansible-playbook --syntax-check mon-compose.yaml
           ansible-playbook --syntax-check playbook-ctrl.yml
           ansible-playbook --syntax-check playbook-web.yml
           ansible-playbook --syntax-check playbook-mon.yml
