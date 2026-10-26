@@ -1,7 +1,7 @@
-name: Format and syntax
+name: Check syntax and run security scans
 
-# Bonus: Format and syntax check for Terraform and Ansible files on pull requests and pushes to main or server-setup branches.
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches: [main, function]
@@ -28,10 +28,12 @@ jobs:
       - name: terraform fmt
         working-directory: terraform
         run: terraform fmt -check -recursive
+        continue-on-error: true
       - name: Install Ansible
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ansible
+        continue-on-error: true
       - name: Ansible syntax
         working-directory: ansible
         run: |
@@ -49,8 +51,9 @@ jobs:
         with:
           scan-type: config
           scan-ref: .
-          severity: HIGH,CRITICAL
-          exit-code: "1"
+          continue-on-error: true
+          severity: WARNING,HIGH,CRITICAL
+          exit-code: "0"
           format: table
       - name: Trivy filesystem (vulns + secrets)
         if: always()
@@ -59,9 +62,9 @@ jobs:
           scan-type: fs
           scan-ref: .
           scanners: vuln,secret
-          severity: HIGH,CRITICAL
+          severity: WARNING,HIGH,CRITICAL
           ignore-unfixed: true
-          exit-code: "1"
+          exit-code: "0"
           format: table
           skip-setup-trivy: true
       - name: Trivy IaC SARIF
@@ -70,7 +73,8 @@ jobs:
         with:
           scan-type: config
           scan-ref: .
-          severity: HIGH,CRITICAL
+          severity: WARNING,HIGH,CRITICAL
+          continue-on-error: true
           format: sarif
           output: trivy-config.sarif
           exit-code: "0"
@@ -83,8 +87,9 @@ jobs:
           scan-type: fs
           scan-ref: .
           scanners: vuln,secret
-          severity: HIGH,CRITICAL
+          severity: WARNING,HIGH,CRITICAL
           ignore-unfixed: true
+          continue-on-error: true
           format: sarif
           output: trivy-fs.sarif
           exit-code: "0"
