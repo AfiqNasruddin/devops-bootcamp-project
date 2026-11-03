@@ -3,6 +3,8 @@
   hosts: mon
   become: true
   gather_facts: true
+  vars:
+    web_private_ip: "{{ hostvars['webserver']['ansible_host'] }}"
   tasks:
     - name: Update apt cache and upgrade packages
       ansible.builtin.apt:
@@ -64,7 +66,7 @@
         mode: "0755"
 
     - name: Install Prometheus config
-      ansible.builtin.copy:
+      ansible.builtin.template:
         src: mon-prometheus.yaml.j2
         dest: /opt/monitoring/prometheus.yml
         mode: "0644"
@@ -76,8 +78,6 @@
         mode: "0644"
 
     - name: Start Prometheus and Grafana
-      ansible.builtin.command:
-        cmd: docker compose up -d
-        chdir: /opt/monitoring
-      register: compose_up
-      changed_when: "'Started' in compose_up.stdout or 'Created' in compose_up.stdout"
+      community.docker.docker_compose_v2:
+        project_src: /opt/monitoring
+        state: present

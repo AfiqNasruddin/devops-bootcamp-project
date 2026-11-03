@@ -66,12 +66,6 @@
       args:
         creates: /usr/local/bin/aws
 
-    - name: Clone Infratify/ship
-      ansible.builtin.git:
-        repo: https://github.com/Infratify/ship.git
-        dest: /home/ubuntu/infratify-ship
-        become_user: ubuntu
-
     - name: Install node_exporter
       ansible.builtin.include_role:
         name: prometheus.prometheus.node_exporter
@@ -79,9 +73,20 @@
         node_exporter_web_listen_address: "0.0.0.0:9100"
 
     - name: Login to AWS ECR
-      ansible.builtin.shell: |
-        set -euo pipefail
-        aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 345594575920.dkr.ecr.ap-southeast-1.amazonaws.com
-      args:
-        executable: /bin/zsh
+      community.docker.docker_login:
+        registry_url: 345594575920.dkr.ecr.ap-southeast-1.amazonaws.com
+        username: AWS
+        password: "{{ lookup('pipe', 'aws ecr get-login-password --region ap-southeast-1') }}"
+
+    - name: Run Docker container
+      community.docker.docker_container:
+        name: ship
+        image: 345594575920.dkr.ecr.ap-southeast-1.amazonaws.com/devops-bootcamp/final-project-afiq:latest
+        pull: always
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "80:80"
+    
+  
       
