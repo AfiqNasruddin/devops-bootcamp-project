@@ -53,12 +53,6 @@
         docker_users:
           - ubuntu
 
-    - name: Install node_exporter
-      ansible.builtin.include_role:
-        name: prometheus.prometheus.node_exporter
-      vars:
-        node_exporter_web_listen_address: "0.0.0.0:9100"
-
     - name: Create monitoring directory
       ansible.builtin.file:
         path: /opt/monitoring

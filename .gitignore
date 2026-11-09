@@ -54,3 +54,6 @@ id_ed25519
 credentials
 terraform/env/aws.tfvars
 terraform/generated-key.pem
+
+# AI Coding Agent Ignore Configurations
+.opencodeignore
